@@ -79,8 +79,8 @@ void TestArrays (
 	PrintInfo (typeid (type_t).name());
 
 	// Create arrays of the target size
-	RandomArray <type_t> target (SIZE, SEED, MAX_VALUE);
-	RandomArray <type_t> source (SIZE, SEED, MAX_VALUE);
+	RandomArray <type_t> target (SIZE, SEED - 1, MAX_VALUE);
+	RandomArray <type_t> source (SIZE, SEED + 1, MAX_VALUE);
 
 	// Run the test in many rounds with a random offset and element count
 	for (size_t i = 0; i < ROUNDS; i++) {
@@ -698,83 +698,16 @@ void Frac (type_t array[], size_t size)
 }
 
 //============================================================================//
-//      Numerical integration                                                 //
-//============================================================================//
-template <typename type_t>
-void Fast2Sum (type_t &high, type_t &low, type_t value) {
-	type_t tval = value + low;
-	type_t thigh = high + tval;
-	type_t vdelta = tval - value;
-	type_t hdelta = thigh - high;
-	low -= vdelta;
-	tval -= hdelta;
-	high = thigh;
-	low += tval;
-}
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-template <typename type_t>
-void Fast3Sum (type_t &high, type_t &middle, type_t &low, type_t val_hi, type_t val_lo) {
-	Fast2Sum (middle, low, val_lo);
-	Fast2Sum (high, middle, val_hi);
-}
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-template <typename type_t>
-void Abs2Sum (type_t &high, type_t &low, type_t value) {
-	value = fabs (value);
-	type_t tot = max (high, value);
-	type_t val = min (high, value);
-	Fast2Sum (tot, low, val);
-	high = tot;
-}
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-template <typename type_t>
-void Sign2Sum (type_t &phigh, type_t &plow, type_t &nhigh, type_t &nlow, type_t value) {
-	type_t &high = signbit (value) ? nhigh : phigh;
-	type_t &low = signbit (value) ? plow : nlow;
-	value = fabs (value);
-	type_t tot = max (high, value);
-	type_t val = min (high, value);
-	Fast2Sum (tot, low, val);
-	high = tot;
-}
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-template <typename type_t>
-void Sqr2Sum (type_t &high, type_t &low, type_t val_hi, type_t val_lo) {
-	type_t tot = max (high, val_hi);
-	type_t err = max (low, val_lo);
-	type_t val = min (high, val_hi);
-	type_t rem = min (low, val_lo);
-	Fast2Sum (tot, err, val + rem);
-	high = tot;
-	low = err;
-}
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-template <typename type_t>
-void Mul2Sum (type_t &phigh, type_t &plow, type_t &nhigh, type_t &nlow, type_t val_hi, type_t val_lo) {
-	type_t &high = signbit (val_hi) ? nhigh : phigh;
-	type_t &low = signbit (val_hi) ? plow : nlow;
-	type_t tot = max (high, val_hi);
-	type_t err = max (low, val_lo);
-	type_t val = min (high, val_hi);
-	type_t rem = min (low, val_lo);
-	Fast2Sum (tot, err, val + rem);
-	high = tot;
-	low = err;
-}
-
-//============================================================================//
 //      Sum of values                                                         //
 //============================================================================//
 template <typename type_t>
 type_t Sum (const type_t array[], size_t size) {
-	type_t pos_sum = 0.0, pos_er = 0.0;
-	type_t neg_sum = 0.0, neg_er = 0.0;
-	int old_rounding = fegetround();
-	fesetround (FE_TOWARDZERO);
-	for (size_t i = 0; i < size; i++)
-		Sign2Sum (pos_sum, pos_er, neg_sum, neg_er, array[i]);
-	fesetround (old_rounding);
-	return (pos_sum + pos_er) - (neg_sum + neg_er);
+	mpf_class total_sum (0);
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val (array[i]);
+		total_sum += val;
+	}
+	return total_sum.get_d ();
 }
 
 //============================================================================//
@@ -782,14 +715,12 @@ type_t Sum (const type_t array[], size_t size) {
 //============================================================================//
 template <typename type_t>
 type_t SumAbs (const type_t array[], size_t size) {
-	type_t sum = 0.0;
-	type_t errors = 0.0;
-	int old_rounding = fegetround();
-	fesetround (FE_TOWARDZERO);
-	for (size_t i = 0; i < size; i++)
-		Abs2Sum (sum, errors, array[i]);
-	fesetround (old_rounding);
-	return sum + errors;
+	mpf_class total_sum (0);
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val (array[i]);
+		total_sum += abs (val);
+	}
+	return total_sum.get_d ();
 }
 
 //============================================================================//
@@ -797,49 +728,21 @@ type_t SumAbs (const type_t array[], size_t size) {
 //============================================================================//
 template <typename type_t>
 type_t SumSqr (const type_t array[], size_t size) {
-	type_t sum = 0.0;
-	type_t errors = 0.0;
-	int old_rounding = fegetround();
-	fesetround (FE_TOWARDZERO);
-	for (size_t i = 0; i < size; i++) {
-		type_t x = array[i];
-		type_t sqr_hi = x * x;
-		type_t sqr_lo = fma (x, x, -sqr_hi);
-		Sqr2Sum (sum, errors, sqr_hi, sqr_lo);
+	mpf_class total_sum (0);
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val (array[i]);
+		total_sum += val * val;
 	}
-	fesetround (old_rounding);
-	return sum + errors;
+	return total_sum.get_d ();
 }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 template <typename type_t>
-void SumSqr2 (const type_t array[], size_t size, type_t &sum_high, type_t &sum_low) {
-	sum_high = 0.0;
-	sum_low = 0.0;
-	type_t errors = 0.0;
-	int old_rounding = fegetround();
-	fesetround (FE_TOWARDZERO);
-	for (size_t i = 0; i < size; i++) {
-		type_t x = array[i];
-		type_t sqr_hi = x * x;
-		type_t sqr_lo = std::fma (x, x, -sqr_hi);
-		type_t high, low, val_hi, val_lo;
-		if (sum_high > sqr_hi) {
-			high = sum_high;
-			low = sum_low;
-			val_hi = sqr_hi;
-			val_lo = sqr_lo;
-		} else {
-			high = sqr_hi;
-			low = sqr_lo;
-			val_hi = sum_high;
-			val_lo = sum_low;
-		}
-		Fast3Sum (high, low, errors, val_hi, val_lo);
-		sum_high = high;
-		sum_low = low;
+void SumSqr2 (const type_t array[], size_t size, mpf_class &total_sum) {
+	total_sum = 0;
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val (array[i]);
+		total_sum += val * val;
 	}
-	fesetround(old_rounding);
-	sum_low += errors;
 }
 
 //============================================================================//
@@ -847,19 +750,23 @@ void SumSqr2 (const type_t array[], size_t size, type_t &sum_high, type_t &sum_l
 //============================================================================//
 template <typename type_t>
 type_t SumMul (const type_t array1[], const type_t array2[], size_t size) {
-	type_t pos_sum = 0.0, pos_er = 0.0;
-	type_t neg_sum = 0.0, neg_er = 0.0;
-	int old_rounding = fegetround();
-	fesetround (FE_TOWARDZERO);
-	for (size_t i = 0; i < size; i++) {
-		type_t x = array1[i];
-		type_t y = array2[i];
-		type_t sqr_hi = x * y;
-		type_t sqr_lo = fma (x, y, -sqr_hi);
-		Mul2Sum (pos_sum, pos_er, neg_sum, neg_er, sqr_hi, sqr_lo);
+	mpf_class total_sum (0);
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val1 (array1[i]);
+		mpf_class val2 (array2[i]);
+		total_sum += val1 * val2;
 	}
-	fesetround (old_rounding);
-	return (pos_sum + pos_er) - (neg_sum + neg_er);
+	return total_sum.get_d ();
+}
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+template <typename type_t>
+void SumMul2 (const type_t array1[], const type_t array2[], size_t size, mpf_class &total_sum) {
+	total_sum = 0;
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val1 (array1[i]);
+		mpf_class val2 (array2[i]);
+		total_sum += val1 * val2;
+	}
 }
 
 //============================================================================//
@@ -867,14 +774,12 @@ type_t SumMul (const type_t array1[], const type_t array2[], size_t size) {
 //============================================================================//
 template <typename type_t>
 type_t SumDiff (const type_t array[], size_t size, type_t value) {
-	type_t pos_sum = 0.0, pos_er = 0.0;
-	type_t neg_sum = 0.0, neg_er = 0.0;
-	int old_rounding = fegetround();
-	fesetround (FE_TOWARDZERO);
-	for (size_t i = 0; i < size; i++)
-		Sign2Sum (pos_sum, pos_er, neg_sum, neg_er, array[i] - value);
-	fesetround (old_rounding);
-	return (pos_sum + pos_er) - (neg_sum + neg_er);
+	mpf_class total_sum (0);
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val (array[i] - value);
+		total_sum += val;
+	}
+	return total_sum.get_d ();
 }
 
 //============================================================================//
@@ -882,14 +787,12 @@ type_t SumDiff (const type_t array[], size_t size, type_t value) {
 //============================================================================//
 template <typename type_t>
 type_t SumAbsDiff (const type_t array[], size_t size, type_t value) {
-	type_t sum = 0.0;
-	type_t errors = 0.0;
-	int old_rounding = fegetround();
-	fesetround (FE_TOWARDZERO);
-	for (size_t i = 0; i < size; i++)
-		Abs2Sum (sum, errors, array[i] - value);
-	fesetround (old_rounding);
-	return sum + errors;
+	mpf_class total_sum (0);
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val (array[i] - value);
+		total_sum += abs (val);
+	}
+	return total_sum.get_d ();
 }
 
 //============================================================================//
@@ -897,18 +800,21 @@ type_t SumAbsDiff (const type_t array[], size_t size, type_t value) {
 //============================================================================//
 template <typename type_t>
 type_t SumSqrDiff (const type_t array[], size_t size, type_t value) {
-	type_t sum = 0.0;
-	type_t errors = 0.0;
-	int old_rounding = fegetround();
-	fesetround (FE_TOWARDZERO);
-	for (size_t i = 0; i < size; i++) {
-		type_t x = array[i] - value;
-		type_t sqr_hi = x * x;
-		type_t sqr_lo = fma (x, x, -sqr_hi);
-		Sqr2Sum (sum, errors, sqr_hi, sqr_lo);
+	mpf_class total_sum (0);
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val (array[i] - value);
+		total_sum += val * val;
 	}
-	fesetround (old_rounding);
-	return sum + errors;
+	return total_sum.get_d ();
+}
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+template <typename type_t>
+void SumSqrDiff2 (const type_t array[], size_t size, type_t value, mpf_class &total_sum) {
+	total_sum = 0;
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val (array[i] - value);
+		total_sum += val * val;
+	}
 }
 
 //============================================================================//
@@ -916,19 +822,23 @@ type_t SumSqrDiff (const type_t array[], size_t size, type_t value) {
 //============================================================================//
 template <typename type_t>
 type_t SumMulDiff (const type_t array1[], const type_t array2[], size_t size, type_t value1, type_t value2) {
-	type_t pos_sum = 0.0, pos_er = 0.0;
-	type_t neg_sum = 0.0, neg_er = 0.0;
-	int old_rounding = fegetround();
-	fesetround (FE_TOWARDZERO);
-	for (size_t i = 0; i < size; i++) {
-		type_t x = array1[i] - value1;
-		type_t y = array2[i] - value2;
-		type_t sqr_hi = x * y;
-		type_t sqr_lo = fma (x, y, -sqr_hi);
-		Mul2Sum (pos_sum, pos_er, neg_sum, neg_er, sqr_hi, sqr_lo);
+	mpf_class total_sum (0);
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val1 (array1[i] - value1);
+		mpf_class val2 (array2[i] - value2);
+		total_sum += val1 * val2;
 	}
-	fesetround (old_rounding);
-	return (pos_sum + pos_er) - (neg_sum + neg_er);
+	return total_sum.get_d ();
+}
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+template <typename type_t>
+void SumMulDiff2 (const type_t array1[], const type_t array2[], size_t size, type_t value1, type_t value2, mpf_class &total_sum) {
+	total_sum = 0;
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val1 (array1[i] - value1);
+		mpf_class val2 (array2[i] - value2);
+		total_sum += val1 * val2;
+	}
 }
 
 //============================================================================//
@@ -936,14 +846,12 @@ type_t SumMulDiff (const type_t array1[], const type_t array2[], size_t size, ty
 //============================================================================//
 template <typename type_t>
 type_t SumDist (const type_t array1[], const type_t array2[], size_t size) {
-	type_t pos_sum = 0.0, pos_er = 0.0;
-	type_t neg_sum = 0.0, neg_er = 0.0;
-	int old_rounding = fegetround();
-	fesetround (FE_TOWARDZERO);
-	for (size_t i = 0; i < size; i++)
-		Sign2Sum (pos_sum, pos_er, neg_sum, neg_er, array1[i] - array2[i]);
-	fesetround (old_rounding);
-	return (pos_sum + pos_er) - (neg_sum + neg_er);
+	mpf_class total_sum (0);
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val (array1[i] - array2[i]);
+		total_sum += val;
+	}
+	return total_sum.get_d ();
 }
 
 //============================================================================//
@@ -951,14 +859,12 @@ type_t SumDist (const type_t array1[], const type_t array2[], size_t size) {
 //============================================================================//
 template <typename type_t>
 type_t SumAbsDist (const type_t array1[], const type_t array2[], size_t size) {
-	type_t sum = 0.0;
-	type_t errors = 0.0;
-	int old_rounding = fegetround();
-	fesetround (FE_TOWARDZERO);
-	for (size_t i = 0; i < size; i++)
-		Abs2Sum (sum, errors, array1[i] - array2[i]);
-	fesetround (old_rounding);
-	return sum + errors;
+	mpf_class total_sum (0);
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val (array1[i] - array2[i]);
+		total_sum += abs (val);
+	}
+	return total_sum.get_d ();
 }
 
 //============================================================================//
@@ -966,18 +872,12 @@ type_t SumAbsDist (const type_t array1[], const type_t array2[], size_t size) {
 //============================================================================//
 template <typename type_t>
 type_t SumSqrDist (const type_t array1[], const type_t array2[], size_t size) {
-	type_t sum = 0.0;
-	type_t errors = 0.0;
-	int old_rounding = fegetround();
-	fesetround (FE_TOWARDZERO);
-	for (size_t i = 0; i < size; i++) {
-		type_t x = array1[i] - array2[i];
-		type_t sqr_hi = x * x;
-		type_t sqr_lo = fma (x, x, -sqr_hi);
-		Sqr2Sum (sum, errors, sqr_hi, sqr_lo);
+	mpf_class total_sum (0);
+	for (size_t i = 0; i < size; ++i) {
+		mpf_class val (array1[i] - array2[i]);
+		total_sum += val * val;
 	}
-	fesetround (old_rounding);
-	return sum + errors;
+	return total_sum.get_d ();
 }
 
 //============================================================================//
@@ -2170,14 +2070,82 @@ void fname (																	\
 	type_t correct_value = fname <type_t> (target.Data() + toffset, source.Data() + soffset, count, value1, value2);\
 	CheckResult (computed_value, correct_value);								\
 }
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# define	PSUM1(fname)														\
+template <typename type_t>														\
+void fname (																	\
+	RandomArray <type_t> &array,												\
+	size_t offset,																\
+	size_t count,																\
+	type_t value																\
+){																				\
+	mpf_class correct_sum;														\
+	type_t computed_high, computed_low;											\
+	Array::fname (array.Data() + offset, count, computed_high, computed_low);	\
+	fname <type_t> (array.Data() + offset, count, correct_sum);					\
+	CheckResult2 (computed_high, computed_low, correct_sum);					\
+}
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# define	PSUM2(fname)														\
+template <typename type_t>														\
+void fname (																	\
+	RandomArray <type_t> &array,												\
+	size_t offset,																\
+	size_t count,																\
+	type_t value																\
+){																				\
+	mpf_class correct_sum;														\
+	type_t computed_high, computed_low;											\
+	Array::fname (array.Data() + offset, count, value, computed_high, computed_low);\
+	fname <type_t> (array.Data() + offset, count, value, correct_sum);			\
+	CheckResult2 (computed_high, computed_low, correct_sum);					\
+}
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# define	PSUM3(fname)														\
+template <typename type_t>														\
+void fname (																	\
+	RandomArray <type_t> &target,												\
+	RandomArray <type_t> &source,												\
+	size_t toffset,																\
+	size_t soffset,																\
+	size_t count																\
+){																				\
+	mpf_class correct_sum;														\
+	type_t computed_high, computed_low;											\
+	Array::fname (target.Data() + toffset, source.Data() + soffset, count, computed_high, computed_low);\
+	fname <type_t> (target.Data() + toffset, source.Data() + soffset, count, correct_sum);\
+	CheckResult2 (computed_high, computed_low, correct_sum);					\
+}
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# define	PSUM4(fname)														\
+template <typename type_t>														\
+void fname (																	\
+	RandomArray <type_t> &target,												\
+	RandomArray <type_t> &source,												\
+	size_t toffset,																\
+	size_t soffset,																\
+	size_t count																\
+){																				\
+	type_t value1 = target.RandomValue();										\
+	type_t value2 = source.RandomValue();										\
+	mpf_class correct_sum;														\
+	type_t computed_high, computed_low;											\
+	Array::fname (target.Data() + toffset, source.Data() + soffset, count, value1, value2, computed_high, computed_low);\
+	fname <type_t> (target.Data() + toffset, source.Data() + soffset, count, value1, value2, correct_sum);\
+	CheckResult2 (computed_high, computed_low, correct_sum);					\
+}
 SUM1 (Sum)
 SUM1 (SumAbs)
 SUM1 (SumSqr)
 SUM3 (SumMul)
+PSUM1 (SumSqr2)
+PSUM3 (SumMul2)
 SUM2 (SumDiff)
 SUM2 (SumAbsDiff)
 SUM2 (SumSqrDiff)
 SUM4 (SumMulDiff)
+PSUM2 (SumSqrDiff2)
+PSUM4 (SumMulDiff2)
 SUM3 (SumDist)
 SUM3 (SumAbsDist)
 SUM3 (SumSqrDist)
@@ -2203,6 +2171,16 @@ USCALAR_FLT (SumSqr)
 UVECTOR_FLT (SumMul)
 
 //============================================================================//
+//      Precise sum of squared values                                         //
+//============================================================================//
+USCALAR_FLT (SumSqr2)
+
+//============================================================================//
+//      Precise sum of multiplied values                                      //
+//============================================================================//
+UVECTOR_FLT (SumMul2)
+
+//============================================================================//
 //      Sum of signed differences                                             //
 //============================================================================//
 USCALAR_FLT (SumDiff)
@@ -2221,6 +2199,16 @@ USCALAR_FLT (SumSqrDiff)
 //      Sum of multiplied differences                                         //
 //============================================================================//
 UVECTOR_FLT (SumMulDiff)
+
+//============================================================================//
+//      Precise sum of squared differences                                    //
+//============================================================================//
+USCALAR_FLT (SumSqrDiff2)
+
+//============================================================================//
+//      Precise sum of multiplied differences                                 //
+//============================================================================//
+UVECTOR_FLT (SumMulDiff2)
 
 //============================================================================//
 //      Sum of signed distances                                               //
@@ -3156,6 +3144,9 @@ try {
 	PrintHeader ("Array library test suite");
 	cout << "This test operates with " << SIZE << "-long arrays in " << ROUNDS << " rounds with " << TRIES << " tries in each." << endl;
 
+	// Set the precision of GMP operations
+	mpf_set_default_prec (256);
+
 	// Initialization
 	TestInit();
 
@@ -3222,10 +3213,14 @@ try {
 	TestSumAbs();
 	TestSumSqr();
 	TestSumMul();
+	TestSumSqr2();
+	TestSumMul2();
 	TestSumDiff();
 	TestSumAbsDiff();
 	TestSumSqrDiff();
 	TestSumMulDiff();
+	TestSumSqrDiff2();
+	TestSumMulDiff2();
 	TestSumDist();
 	TestSumAbsDist();
 	TestSumSqrDist();
