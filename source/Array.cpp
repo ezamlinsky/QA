@@ -704,7 +704,8 @@ template <typename type_t>
 type_t Sum (const type_t array[], size_t size) {
 	mpf_class total_sum (0);
 	for (size_t i = 0; i < size; ++i) {
-		mpf_class val (array[i]);
+		type_t temp = array[i];
+		mpf_class val (temp);
 		total_sum += val;
 	}
 	return total_sum.get_d ();
@@ -717,8 +718,9 @@ template <typename type_t>
 type_t SumAbs (const type_t array[], size_t size) {
 	mpf_class total_sum (0);
 	for (size_t i = 0; i < size; ++i) {
-		mpf_class val (array[i]);
-		total_sum += abs (val);
+		type_t temp = abs (array[i]);
+		mpf_class val (temp);
+		total_sum += val;
 	}
 	return total_sum.get_d ();
 }
@@ -776,7 +778,8 @@ template <typename type_t>
 type_t SumDiff (const type_t array[], size_t size, type_t value) {
 	mpf_class total_sum (0);
 	for (size_t i = 0; i < size; ++i) {
-		mpf_class val (array[i] - value);
+		type_t temp = array[i] - value;
+		mpf_class val (temp);
 		total_sum += val;
 	}
 	return total_sum.get_d ();
@@ -789,8 +792,9 @@ template <typename type_t>
 type_t SumAbsDiff (const type_t array[], size_t size, type_t value) {
 	mpf_class total_sum (0);
 	for (size_t i = 0; i < size; ++i) {
-		mpf_class val (array[i] - value);
-		total_sum += abs (val);
+		type_t temp = abs (array[i] - value);
+		mpf_class val (temp);
+		total_sum += val;
 	}
 	return total_sum.get_d ();
 }
@@ -848,7 +852,8 @@ template <typename type_t>
 type_t SumDist (const type_t array1[], const type_t array2[], size_t size) {
 	mpf_class total_sum (0);
 	for (size_t i = 0; i < size; ++i) {
-		mpf_class val (array1[i] - array2[i]);
+		type_t temp = array1[i] - array2[i];
+		mpf_class val (temp);
 		total_sum += val;
 	}
 	return total_sum.get_d ();
@@ -861,8 +866,9 @@ template <typename type_t>
 type_t SumAbsDist (const type_t array1[], const type_t array2[], size_t size) {
 	mpf_class total_sum (0);
 	for (size_t i = 0; i < size; ++i) {
-		mpf_class val (array1[i] - array2[i]);
-		total_sum += abs (val);
+		type_t temp = abs (array1[i] - array2[i]);
+		mpf_class val (temp);
+		total_sum += val;
 	}
 	return total_sum.get_d ();
 }
@@ -2015,7 +2021,7 @@ USCALAR_FLT (Frac)
 //============================================================================//
 //      Numerical integration                                                 //
 //============================================================================//
-# define	SUM1(fname)															\
+# define	SUMS(fname)															\
 template <typename type_t>														\
 void fname (																	\
 	RandomArray <type_t> &array,												\
@@ -2028,7 +2034,7 @@ void fname (																	\
 	CheckResult (computed_value, correct_value);								\
 }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# define	SUM2(fname)															\
+# define	SUMDIFF(fname)														\
 template <typename type_t>														\
 void fname (																	\
 	RandomArray <type_t> &array,												\
@@ -2041,7 +2047,7 @@ void fname (																	\
 	CheckResult (computed_value, correct_value);								\
 }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# define	SUM3(fname)															\
+# define	SUMDIST(fname)														\
 template <typename type_t>														\
 void fname (																	\
 	RandomArray <type_t> &target,												\
@@ -2055,7 +2061,7 @@ void fname (																	\
 	CheckResult (computed_value, correct_value);								\
 }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# define	SUM4(fname)															\
+# define	SUMV(fname)															\
 template <typename type_t>														\
 void fname (																	\
 	RandomArray <type_t> &target,												\
@@ -2083,7 +2089,7 @@ void fname (																	\
 	type_t computed_high, computed_low;											\
 	Array::fname (array.Data() + offset, count, computed_high, computed_low);	\
 	fname <type_t> (array.Data() + offset, count, correct_sum);					\
-	CheckResult2 (computed_high, computed_low, correct_sum);					\
+	CheckResult2 (computed_high, computed_low, correct_sum, type_t (4));		\
 }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # define	PSUM2(fname)														\
@@ -2098,7 +2104,7 @@ void fname (																	\
 	type_t computed_high, computed_low;											\
 	Array::fname (array.Data() + offset, count, value, computed_high, computed_low);\
 	fname <type_t> (array.Data() + offset, count, value, correct_sum);			\
-	CheckResult2 (computed_high, computed_low, correct_sum);					\
+	CheckResult2 (computed_high, computed_low, correct_sum, type_t (4));		\
 }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # define	PSUM3(fname)														\
@@ -2114,7 +2120,7 @@ void fname (																	\
 	type_t computed_high, computed_low;											\
 	Array::fname (target.Data() + toffset, source.Data() + soffset, count, computed_high, computed_low);\
 	fname <type_t> (target.Data() + toffset, source.Data() + soffset, count, correct_sum);\
-	CheckResult2 (computed_high, computed_low, correct_sum);					\
+	CheckResult2 (computed_high, computed_low, correct_sum, type_t (4));		\
 }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # define	PSUM4(fname)														\
@@ -2132,23 +2138,23 @@ void fname (																	\
 	type_t computed_high, computed_low;											\
 	Array::fname (target.Data() + toffset, source.Data() + soffset, count, value1, value2, computed_high, computed_low);\
 	fname <type_t> (target.Data() + toffset, source.Data() + soffset, count, value1, value2, correct_sum);\
-	CheckResult2 (computed_high, computed_low, correct_sum);					\
+	CheckResult2 (computed_high, computed_low, correct_sum, type_t (8));		\
 }
-SUM1 (Sum)
-SUM1 (SumAbs)
-SUM1 (SumSqr)
-SUM3 (SumMul)
+SUMS (Sum)
+SUMS (SumAbs)
+SUMS (SumSqr)
+SUMDIST (SumMul)
 PSUM1 (SumSqr2)
 PSUM3 (SumMul2)
-SUM2 (SumDiff)
-SUM2 (SumAbsDiff)
-SUM2 (SumSqrDiff)
-SUM4 (SumMulDiff)
+SUMDIFF (SumDiff)
+SUMDIFF (SumAbsDiff)
+SUMDIFF (SumSqrDiff)
+SUMV (SumMulDiff)
 PSUM2 (SumSqrDiff2)
 PSUM4 (SumMulDiff2)
-SUM3 (SumDist)
-SUM3 (SumAbsDist)
-SUM3 (SumSqrDist)
+SUMDIST (SumDist)
+SUMDIST (SumAbsDist)
+SUMDIST (SumSqrDist)
 
 //============================================================================//
 //      Sum of values                                                         //
