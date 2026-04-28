@@ -8,7 +8,6 @@
 ################################################################################
 */
 # include	<cstring>
-# include	<fenv.h>
 # include	<Common.h>
 # include	<RandomArray.h>
 # include	<Array.h>
@@ -17,7 +16,7 @@
 //      Test parameters                                                       //
 //****************************************************************************//
 # define	SCALE		12				// Scale factor
-# define	SIZE		(1 << SCALE) 	// Generate 2 ^ SCALE elements-long arrays
+# define	SIZE		((1<<SCALE)-1)	// Generate 2 ^ SCALE elements-long arrays
 # define	ROUNDS		100				// Rounds for random testing
 # define	TRIES		8				// Tries in each round
 # define	SEED		100				// Seed value for the random number generator
