@@ -736,15 +736,6 @@ type_t SumSqr (const type_t array[], size_t size) {
 	}
 	return total_sum.get_d ();
 }
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-template <typename type_t>
-void SumSqr2 (const type_t array[], size_t size, mpf_class &total_sum) {
-	total_sum = 0;
-	for (size_t i = 0; i < size; ++i) {
-		mpf_class val (array[i]);
-		total_sum += val * val;
-	}
-}
 
 //============================================================================//
 //      Sum of multiplied values                                              //
@@ -758,16 +749,6 @@ type_t SumMul (const type_t array1[], const type_t array2[], size_t size) {
 		total_sum += val1 * val2;
 	}
 	return total_sum.get_d ();
-}
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-template <typename type_t>
-void SumMul2 (const type_t array1[], const type_t array2[], size_t size, mpf_class &total_sum) {
-	total_sum = 0;
-	for (size_t i = 0; i < size; ++i) {
-		mpf_class val1 (array1[i]);
-		mpf_class val2 (array2[i]);
-		total_sum += val1 * val2;
-	}
 }
 
 //============================================================================//
@@ -810,15 +791,6 @@ type_t SumSqrDiff (const type_t array[], size_t size, type_t value) {
 	}
 	return total_sum.get_d ();
 }
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-template <typename type_t>
-void SumSqrDiff2 (const type_t array[], size_t size, type_t value, mpf_class &total_sum) {
-	total_sum = 0;
-	for (size_t i = 0; i < size; ++i) {
-		mpf_class val (array[i] - value);
-		total_sum += val * val;
-	}
-}
 
 //============================================================================//
 //      Sum of multiplied differences                                         //
@@ -832,16 +804,6 @@ type_t SumMulDiff (const type_t array1[], const type_t array2[], size_t size, ty
 		total_sum += val1 * val2;
 	}
 	return total_sum.get_d ();
-}
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-template <typename type_t>
-void SumMulDiff2 (const type_t array1[], const type_t array2[], size_t size, type_t value1, type_t value2, mpf_class &total_sum) {
-	total_sum = 0;
-	for (size_t i = 0; i < size; ++i) {
-		mpf_class val1 (array1[i] - value1);
-		mpf_class val2 (array2[i] - value2);
-		total_sum += val1 * val2;
-	}
 }
 
 //============================================================================//
@@ -2075,82 +2037,14 @@ void fname (																	\
 	type_t correct_value = fname <type_t> (target.Data() + toffset, source.Data() + soffset, count, value1, value2);\
 	CheckResult (computed_value, correct_value);								\
 }
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# define	PSUM1(fname)														\
-template <typename type_t>														\
-void fname (																	\
-	RandomArray <type_t> &array,												\
-	size_t offset,																\
-	size_t count,																\
-	type_t value																\
-){																				\
-	mpf_class correct_sum;														\
-	type_t computed_high, computed_low;											\
-	Array::fname (array.Data() + offset, count, computed_high, computed_low);	\
-	fname <type_t> (array.Data() + offset, count, correct_sum);					\
-	CheckResult2 (computed_high, computed_low, correct_sum, type_t (4));		\
-}
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# define	PSUM2(fname)														\
-template <typename type_t>														\
-void fname (																	\
-	RandomArray <type_t> &array,												\
-	size_t offset,																\
-	size_t count,																\
-	type_t value																\
-){																				\
-	mpf_class correct_sum;														\
-	type_t computed_high, computed_low;											\
-	Array::fname (array.Data() + offset, count, value, computed_high, computed_low);\
-	fname <type_t> (array.Data() + offset, count, value, correct_sum);			\
-	CheckResult2 (computed_high, computed_low, correct_sum, type_t (4));		\
-}
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# define	PSUM3(fname)														\
-template <typename type_t>														\
-void fname (																	\
-	RandomArray <type_t> &target,												\
-	RandomArray <type_t> &source,												\
-	size_t toffset,																\
-	size_t soffset,																\
-	size_t count																\
-){																				\
-	mpf_class correct_sum;														\
-	type_t computed_high, computed_low;											\
-	Array::fname (target.Data() + toffset, source.Data() + soffset, count, computed_high, computed_low);\
-	fname <type_t> (target.Data() + toffset, source.Data() + soffset, count, correct_sum);\
-	CheckResult2 (computed_high, computed_low, correct_sum, type_t (4));		\
-}
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# define	PSUM4(fname)														\
-template <typename type_t>														\
-void fname (																	\
-	RandomArray <type_t> &target,												\
-	RandomArray <type_t> &source,												\
-	size_t toffset,																\
-	size_t soffset,																\
-	size_t count																\
-){																				\
-	type_t value1 = target.RandomValue();										\
-	type_t value2 = source.RandomValue();										\
-	mpf_class correct_sum;														\
-	type_t computed_high, computed_low;											\
-	Array::fname (target.Data() + toffset, source.Data() + soffset, count, value1, value2, computed_high, computed_low);\
-	fname <type_t> (target.Data() + toffset, source.Data() + soffset, count, value1, value2, correct_sum);\
-	CheckResult2 (computed_high, computed_low, correct_sum, type_t (8));		\
-}
 SUMS (Sum)
 SUMS (SumAbs)
 SUMS (SumSqr)
 SUMDIST (SumMul)
-PSUM1 (SumSqr2)
-PSUM3 (SumMul2)
 SUMDIFF (SumDiff)
 SUMDIFF (SumAbsDiff)
 SUMDIFF (SumSqrDiff)
 SUMV (SumMulDiff)
-PSUM2 (SumSqrDiff2)
-PSUM4 (SumMulDiff2)
 SUMDIST (SumDist)
 SUMDIST (SumAbsDist)
 SUMDIST (SumSqrDist)
@@ -2176,16 +2070,6 @@ USCALAR_FLT (SumSqr)
 UVECTOR_FLT (SumMul)
 
 //============================================================================//
-//      Precise sum of squared values                                         //
-//============================================================================//
-USCALAR_FLT (SumSqr2)
-
-//============================================================================//
-//      Precise sum of multiplied values                                      //
-//============================================================================//
-UVECTOR_FLT (SumMul2)
-
-//============================================================================//
 //      Sum of signed differences                                             //
 //============================================================================//
 USCALAR_FLT (SumDiff)
@@ -2204,16 +2088,6 @@ USCALAR_FLT (SumSqrDiff)
 //      Sum of multiplied differences                                         //
 //============================================================================//
 UVECTOR_FLT (SumMulDiff)
-
-//============================================================================//
-//      Precise sum of squared differences                                    //
-//============================================================================//
-USCALAR_FLT (SumSqrDiff2)
-
-//============================================================================//
-//      Precise sum of multiplied differences                                 //
-//============================================================================//
-UVECTOR_FLT (SumMulDiff2)
 
 //============================================================================//
 //      Sum of signed distances                                               //
@@ -3218,14 +3092,10 @@ try {
 	TestSumAbs();
 	TestSumSqr();
 	TestSumMul();
-	TestSumSqr2();
-	TestSumMul2();
 	TestSumDiff();
 	TestSumAbsDiff();
 	TestSumSqrDiff();
 	TestSumMulDiff();
-	TestSumSqrDiff2();
-	TestSumMulDiff2();
 	TestSumDist();
 	TestSumAbsDist();
 	TestSumSqrDist();
