@@ -2861,20 +2861,20 @@ void TestRadixSortAsc (void) {
 	TestArray (RadixSortAsc <uint8_t>);
 	TestArray (RadixSortAsc <uint16_t>);
 	TestArray (RadixSortAsc <uint32_t>);
-	//TestArray (RadixSortAsc <uint64_t>);
+	TestArray (RadixSortAsc <uint64_t>);
 
 	// Signed integer types
 	TestArray (RadixSortAsc <sint8_t>);
 	TestArray (RadixSortAsc <sint16_t>);
 	TestArray (RadixSortAsc <sint32_t>);
-	//TestArray (RadixSortAsc <sint64_t>);
+	TestArray (RadixSortAsc <sint64_t>);
 
 	// Floating-point types
 	TestArray (RadixSortAsc <flt32_t>);
-	//TestArray (RadixSortAsc <flt64_t>);
+	TestArray (RadixSortAsc <flt64_t>);
 
 	// Other types
-	//TestArray (RadixSortAsc <size_t>);
+	TestArray (RadixSortAsc <size_t>);
 }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 void TestRadixSortDsc (void) {
@@ -2886,20 +2886,20 @@ void TestRadixSortDsc (void) {
 	TestArray (RadixSortDsc <uint8_t>);
 	TestArray (RadixSortDsc <uint16_t>);
 	TestArray (RadixSortDsc <uint32_t>);
-	//TestArray (RadixSortDsc <uint64_t>);
+	TestArray (RadixSortDsc <uint64_t>);
 
 	// Signed integer types
 	TestArray (RadixSortDsc <sint8_t>);
 	TestArray (RadixSortDsc <sint16_t>);
 	TestArray (RadixSortDsc <sint32_t>);
-	//TestArray (RadixSortDsc <sint64_t>);
+	TestArray (RadixSortDsc <sint64_t>);
 
 	// Floating-point types
 	TestArray (RadixSortDsc <flt32_t>);
-	//TestArray (RadixSortDsc <flt64_t>);
+	TestArray (RadixSortDsc <flt64_t>);
 
 	// Other types
-	//TestArray (RadixSortDsc <size_t>);
+	TestArray (RadixSortDsc <size_t>);
 }
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 USCALAR (RadixSortKeyAsc)
