@@ -517,6 +517,48 @@ type_t SampleSignDev (const type_t array[], size_t size, type_t value) {
 }
 
 //============================================================================//
+//      Median of squared deviations                                          //
+//============================================================================//
+template <typename type_t>
+type_t MedianSqrDev (type_t array[], size_t size, type_t value) {
+	if (size == 0)
+		return NAN;
+	for (size_t i = 0; i < size; ++i) {
+		type_t temp = array[i] - value;
+		array[i] = temp * temp;
+	}
+	return MedianRaw (array, size);
+}
+
+//============================================================================//
+//      Median of absolute deviations                                         //
+//============================================================================//
+template <typename type_t>
+type_t MedianAbsDev (type_t array[], size_t size, type_t value) {
+	if (size == 0)
+		return NAN;
+	for (size_t i = 0; i < size; ++i) {
+		type_t temp = array[i] - value;
+		array[i] = fabs (temp);
+	}
+	return MedianRaw (array, size);
+}
+
+//============================================================================//
+//      Median of signed deviations                                           //
+//============================================================================//
+template <typename type_t>
+type_t MedianSignDev (type_t array[], size_t size, type_t value) {
+	if (size == 0)
+		return NAN;
+	for (size_t i = 0; i < size; ++i) {
+		type_t temp = array[i] - value;
+		array[i] = temp;
+	}
+	return MedianRaw (array, size);
+}
+
+//============================================================================//
 //      Quartile skewness                                                     //
 //============================================================================//
 
@@ -1360,6 +1402,24 @@ SUM2 (SampleSignDev)
 USCALAR_FLT (SampleSignDev)
 
 //============================================================================//
+//      Median of squared deviations                                          //
+//============================================================================//
+SUM2 (MedianSqrDev)
+USCALAR_FLT (MedianSqrDev)
+
+//============================================================================//
+//      Median of absolute deviations                                         //
+//============================================================================//
+SUM2 (MedianAbsDev)
+USCALAR_FLT (MedianAbsDev)
+
+//============================================================================//
+//      Median of signed deviations                                           //
+//============================================================================//
+SUM2 (MedianSignDev)
+USCALAR_FLT (MedianSignDev)
+
+//============================================================================//
 //      Quartile skewness                                                     //
 //============================================================================//
 USCALAR (QuartileSkewness)
@@ -1532,6 +1592,15 @@ try {
 	// Signed deviation
 	TestPopulationSignDev();
 	TestSampleSignDev();
+
+	// Median of squared deviations
+	TestMedianSqrDev();
+
+	// Median of absolute deviations
+	TestMedianAbsDev();
+
+	// Median of signed deviations
+	TestMedianSignDev();
 
 	// Quartile skewness
 	TestQuartileSkewness();
