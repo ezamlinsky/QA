@@ -567,6 +567,74 @@ RQSKEWNESS_FLT (flt32_t)
 RQSKEWNESS_FLT (flt64_t)
 
 //============================================================================//
+//      Meeden's skewness                                                     //
+//============================================================================//
+
+// Population Meeden's skewness
+template <typename type_t>
+type_t PopulationMeedenSkewness (const type_t array[], size_t size, type_t mean, type_t median) {
+	if (size == 0)
+		return NAN;
+	mpf_class var = AbsDev (array, size, median);
+	if (var != 0) {
+		mpf_class temp = mpf_class (size);
+		mpf_class delta = (mpf_class (mean) - mpf_class (median)) * temp;
+		mpf_class res = delta / var;
+		return res.get_d();
+	}
+	return NAN;
+}
+
+// Sample Meeden's skewness
+template <typename type_t>
+type_t SampleMeedenSkewness (const type_t array[], size_t size, type_t mean, type_t median) {
+	if (size <= 1)
+		return NAN;
+	mpf_class var = AbsDev (array, size, median);
+	if (var != 0) {
+		mpf_class temp = mpf_class (size - 1);
+		mpf_class delta = (mpf_class (mean) - mpf_class (median)) * temp;
+		mpf_class res = delta / var;
+		return res.get_d();
+	}
+	return NAN;
+}
+
+//============================================================================//
+//      Pearson's skewness                                                    //
+//============================================================================//
+
+// Population Pearson's skewness
+template <typename type_t>
+type_t PopulationPearsonSkewness (const type_t array[], size_t size, type_t mean, type_t median) {
+	if (size == 0)
+		return NAN;
+	mpf_class var = Variance (array, size, mean);
+	if (var != 0) {
+		mpf_class temp = mpf_class (size);
+		mpf_class delta = 3 * (mpf_class (mean) - mpf_class (median)) * sqrt (temp);
+		mpf_class res = delta / sqrt (var);
+		return res.get_d();
+	}
+	return NAN;
+}
+
+// Sample Pearson's skewness
+template <typename type_t>
+type_t SamplePearsonSkewness (const type_t array[], size_t size, type_t mean, type_t median) {
+	if (size <= 1)
+		return NAN;
+	mpf_class var = Variance (array, size, mean);
+	if (var != 0) {
+		mpf_class temp = mpf_class (size - 1);
+		mpf_class delta = 3 * (mpf_class (mean) - mpf_class (median)) * sqrt (temp);
+		mpf_class res = delta / sqrt (var);
+		return res.get_d();
+	}
+	return NAN;
+}
+
+//============================================================================//
 //      Skewness                                                              //
 //============================================================================//
 template <typename type_t>
@@ -1099,6 +1167,21 @@ void fname (																	\
 	type_t correct_value = fname <type_t> (tref.Data() + toffset, sref.Data() + soffset, count);\
 	CheckResult (computed_value, correct_value);								\
 }
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# define	SUM5(fname)															\
+template <typename type_t>														\
+void fname (																	\
+	RandomArray <type_t> &array,												\
+	size_t offset,																\
+	size_t count,																\
+	type_t value																\
+){																				\
+	type_t median = array.RandomValue();										\
+	RandomArray <type_t> reference (array);										\
+	type_t computed_value = Statistics::fname (array.Data() + offset, count, value, median);\
+	type_t correct_value = fname (reference.Data() + offset, count, value, median);\
+	CheckResult (computed_value, correct_value);								\
+}
 
 //============================================================================//
 //      Scalar testing functions                                              //
@@ -1283,6 +1366,30 @@ USCALAR (QuartileSkewness)
 USCALAR (QuartileSkewnessRaw)
 
 //============================================================================//
+//      Meeden's skewness                                                     //
+//============================================================================//
+
+// Population Meeden's skewness
+SUM5 (PopulationMeedenSkewness)
+USCALAR_FLT (PopulationMeedenSkewness)
+
+// Sample Meeden's skewness
+SUM5 (SampleMeedenSkewness)
+USCALAR_FLT (SampleMeedenSkewness)
+
+//============================================================================//
+//      Pearson's skewness                                                    //
+//============================================================================//
+
+// Population Pearson's skewness
+SUM5 (PopulationPearsonSkewness)
+USCALAR_FLT (PopulationPearsonSkewness)
+
+// Sample Pearson's skewness
+SUM5 (SamplePearsonSkewness)
+USCALAR_FLT (SamplePearsonSkewness)
+
+//============================================================================//
 //      Skewness                                                              //
 //============================================================================//
 
@@ -1429,6 +1536,14 @@ try {
 	// Quartile skewness
 	TestQuartileSkewness();
 	TestQuartileSkewnessRaw();
+
+	// Meeden's skewness
+	TestPopulationMeedenSkewness();
+	TestSampleMeedenSkewness();
+
+	// Pearson's skewness
+	TestPopulationPearsonSkewness();
+	TestSamplePearsonSkewness();
 
 	// Skewness
 	TestPopulationSkewness();
